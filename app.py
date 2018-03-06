@@ -1,7 +1,11 @@
 #online task keeper
 
-from flask import Flask , render_template
+from flask import Flask , render_template, flash, redirect, url_for, session, logging, request
+from flask_mysqldb import MySQL
 from data import Tasks
+from wtforms import Form, StringField, TextAreaField, PasswordField, validators
+from passlib.hash import sha256_crypt
+
 
 tasks = Tasks()
 
@@ -16,6 +20,24 @@ def index():
 def about():
 	return render_template('about.html')
 
+class RegisterForm(Form):
+	name = StringField('Name', [validators.Length(min=1, max=50)])
+	username = StringField('Username', [validators.Length(min=4, max=25)])
+	email = StringField('Email', [validators.Length(min=5, max=50)])
+	password = PasswordField('Password', [
+		validators.DataRequired(),
+		validators.EqualTo('Confirm', message = 'Passwords do not match!')
+		])
+	confirm = PasswordField("Confirm Password")
+
+@app.route('/register', methods = ['GET', 'POST' ])
+def register():
+	form = RegisterForm(request.form)
+	if request.method == 'POST' and form.validate():
+		return render_template('register.html')
+
+	return render_template('register.html', form = form)
+
 if __name__ == '__main__':
 	app.run(debug = True)
-	print(tasks)
+	
