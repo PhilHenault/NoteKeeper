@@ -8,7 +8,7 @@ import pymysql.cursors
 
 app = Flask(__name__)
 
-tasks = Tasks()
+#tasks = Tasks()
 
 
 
@@ -61,7 +61,7 @@ def register():
             flash('You are now registered and can log in', 'success')
             cur.close()
             connection.close()
-            return redirect(url_for('index'))
+            return redirect(url_for('login'))
             
 
         
@@ -103,6 +103,7 @@ def login():
                 return render_template('login.html', error=error)
 
             cur.close()
+            connection.close()
 
         else:
             error = 'Username not found'
@@ -124,6 +125,7 @@ def is_logged_in(f):
 
 
 @app.route('/logout')
+@is_logged_in
 def logout():
     session.clear()
     flash('You are now logged out!', 'success')
@@ -132,7 +134,65 @@ def logout():
 @app.route('/dashboard')
 @is_logged_in
 def dashboard():
+    un = os.environ['DB_USER']
+    pw = os.environ['DB_PASS']
+    connection = pymysql.connect(host='localhost', 
+                                 user=un,
+                                 password=pw,
+                                 db='notekeeper',
+                                 charset='utf8mb4',
+                                 cursorclass=pymysql.cursors.DictCursor) 
+    cur = connection.cursor()
+
+    results = cur.execute("SELECT * FROM tasks WHERE creator = %s", session['username'])
+    tasks = cur.fetchall()
+
+    if results > 0:
+        return render_template('dashboard.html', tasks = tasks)
+    else:
+        msg = 'No tasks. Good job!'
+        return render_template('dashboard.html', msg = msg)
+    cur.close()
+    connection.close()
+
+    
+
+
+class TaskForm(Form):
+    task = StringField('Task', [validators.Length(min=1, max=200)])
+    details = TextAreaField('Details', [validators.Length(min=10)])   
+
+@app.route('/add_task', methods = ['GET', 'POST'])
+@is_logged_in
+def add_task():
+    form = TaskForm(request.form)
+    if request.method == 'POST' and form.validate():
+        uTask = form.task.data
+        details = form.details.data
+        #creator = 
+        un = os.environ['DB_USER']
+        pw = os.environ['DB_PASS']
+        connection = pymysql.connect(host='localhost', 
+                                     user=un,
+                                     password=pw,
+                                     db='notekeeper',
+                                     charset='utf8mb4',
+                                     cursorclass=pymysql.cursors.DictCursor)
+
+        cur = connection.cursor()
+        cur.execute("INSERT INTO tasks (title, info, creator) VALUES(%s, %s, %s)", (uTask, details, session['username']))
+        connection.commit()
+        flash('Task added', 'success')
+        cur.close()
+        connection.close()
+        return redirect(url_for('dashboard'))
+    return render_template('/add_task.html', form = form)
+
+@app.route('/delete_task', methods = ['GET', 'POST'])
+def delete_task():
     return render_template('dashboard.html')
+
+
 
 if __name__ == '__main__':
     app.secret_key = 'secret12345'
