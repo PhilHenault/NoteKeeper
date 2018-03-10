@@ -223,7 +223,25 @@ def edit_task(id):
         return redirect(url_for('dashboard'))
     return render_template('/edit_task.html', form = form)
 
+@app.route('/delete_task/<string:id>', methods = ['POST'])
+@is_logged_in
+def delete_task(id):
+    un = os.environ['DB_USER']
+    pw = os.environ['DB_PASS']
+    connection = pymysql.connect(host='localhost', 
+                                 user=un,
+                                 password=pw,
+                                 db='notekeeper',
+                                 charset='utf8mb4',
+                                 cursorclass=pymysql.cursors.DictCursor)
 
+    cur = connection.cursor()
+    cur.execute("DELETE FROM tasks WHERE id = %s", int(id))
+    connection.commit()
+    flash('Task Deleted', 'success')
+    cur.close()
+    connection.close()
+    return redirect(url_for('dashboard'))
 
 if __name__ == '__main__':
     app.secret_key = 'secret12345'
