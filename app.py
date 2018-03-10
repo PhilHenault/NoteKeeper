@@ -66,6 +66,55 @@ def register():
         
     return render_template('register.html', form=form)
 
+@app.route('/login', methods = ['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        pwdCandidate = request.form['password']
+
+        un = os.environ['DB_USER']
+        pw = os.environ['DB_PASS']
+        connection = pymysql.connect(host='localhost', 
+                                     user=un,
+                                     password=pw,
+                                     db='notekeeper',
+                                     charset='utf8mb4',
+                                     cursorclass=pymysql.cursors.DictCursor)
+
+        cur = connection.cursor()
+        check = cur.execute("SELECT * FROM users WHERE username = (%s)",(username))
+
+        if int(check) > 0:
+            data = cur.fetchone()
+            pwd = data['password']
+
+            if sha256_crypt.verify(pwdCandidate, pwd):
+                session['loggedin'] = True
+                session['username'] = username
+
+                flash('You are now logged in', 'success')
+                return redirect(url_for('dashboard'))
+
+
+                app.logger.info('PASSWORD MATCHED')
+            else:
+                error = 'Invalid login'
+                return render_template('login.html', error=error)
+
+            cur.close()
+
+        else:
+            error = 'Username not found'
+            return render_template('login.html', error=error)
+
+
+
+    return render_template('login.html')
+
+@app.route('/dashboard')
+def dashboard():
+    return render_template('dashboard.html')
+
 if __name__ == '__main__':
     app.secret_key = 'secret12345'
     app.run(debug = True)
