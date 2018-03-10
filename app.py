@@ -188,9 +188,40 @@ def add_task():
         return redirect(url_for('dashboard'))
     return render_template('/add_task.html', form = form)
 
-@app.route('/delete_task', methods = ['GET', 'POST'])
-def delete_task():
-    return render_template('dashboard.html')
+@app.route('/edit_task/<string:id>', methods = ['GET', 'POST'])
+@is_logged_in
+def edit_task(id):
+    un = os.environ['DB_USER']
+    pw = os.environ['DB_PASS']
+    connection = pymysql.connect(host='localhost', 
+                                 user=un,
+                                 password=pw,
+                                 db='notekeeper',
+                                 charset='utf8mb4',
+                                 cursorclass=pymysql.cursors.DictCursor)
+
+    cur = connection.cursor()
+    result = cur.execute("SELECT * FROM tasks WHERE id = %s", int(id))
+    task = cur.fetchone()
+    form = TaskForm(request.form)
+
+    form.task.data = task['title']
+    form.details.data = task['info']
+
+
+    if request.method == 'POST' and form.validate():
+        uTask = request.form['task']
+        details = request.form['details']
+        #creator = 
+        
+
+        cur.execute("UPDATE tasks SET title = %s, info = %s WHERE id = %s", (uTask, details, int(id)))
+        connection.commit()
+        flash('Task updated', 'success')
+        cur.close()
+        connection.close()
+        return redirect(url_for('dashboard'))
+    return render_template('/edit_task.html', form = form)
 
 
 
