@@ -47,15 +47,21 @@ def register():
                                      charset='utf8mb4',
                                      cursorclass=pymysql.cursors.DictCursor)
 
+        cur = connection.cursor()
 
-        cur = connection.cursor() 
-        cur.execute("INSERT INTO users(name, email, username, password) VALUES(%s, %s, %s, %s)", (name, email, username, password))
-        connection.commit()
-        flash('You are now registered and can log in', 'success')
-        cur.close()
-        connection.close()
-        
-        return redirect(url_for('index'))
+        check = cur.execute("SELECT * FROM users WHERE username = (%s)",(username))
+        if int(check) > 0:
+            flash('That username is already taken. Please choose another.')
+            return render_template('register.html', form=form)
+
+        else:
+            cur.execute("INSERT INTO users(name, email, username, password) VALUES(%s, %s, %s, %s)", (name, email, username, password))
+            connection.commit()
+            flash('You are now registered and can log in', 'success')
+            cur.close()
+            connection.close()
+            return redirect(url_for('index'))
+            
 
         
     return render_template('register.html', form=form)
