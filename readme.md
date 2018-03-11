@@ -3,9 +3,8 @@
 Simple web app using the Flask micro framework.<br>   
 NoteKeeper allows for a user to register, login, and create tasks/reminders. The application supports multiple users 
 using a MySQL database. 
-
-
-
+<br>
+<br>
 ## Homepage
 <img align="middle" src = 'images/homepage.jpg' width = 500 >
 <br>
@@ -39,6 +38,4 @@ using a MySQL database.
 
 ## Delete a Task
 <img align="middle" src = 'images/delete.jpg' width = 500 >
-<br>
-<br>
 
