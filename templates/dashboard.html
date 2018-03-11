@@ -9,6 +9,7 @@
 <table class="table table-striped">
     <tr>
       <th>Task</th>
+      <th>Details</th>
       <th>Date</th>
       <th></th>
       <th></th>
@@ -16,6 +17,7 @@
     {% for task in tasks %}
       <tr>
         <td>{{task.title}}</td>
+        <td>{{task.info | safe}}</td>
         <td>{{task.create_date}}</td>
         <td><a href="edit_task/{{task.id}}" class="btn btn-default pull-right">Edit</a></td>
         <td>

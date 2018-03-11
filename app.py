@@ -10,7 +10,14 @@ app = Flask(__name__)
 
 #tasks = Tasks()
 
-
+un = os.environ['DB_USER']
+pw = os.environ['DB_PASS']
+connection = pymysql.connect(host='localhost', 
+                             user=un,
+                             password=pw,
+                             db='notekeeper',
+                             charset='utf8mb4',
+                             cursorclass=pymysql.cursors.DictCursor)
 
 @app.route('/')
 def index():
@@ -39,14 +46,7 @@ def register():
         username = form.username.data
         password = sha256_crypt.encrypt(str(form.password.data))
 
-        un = os.environ['DB_USER']
-        pw = os.environ['DB_PASS']
-        connection = pymysql.connect(host='localhost', 
-                                     user=un,
-                                     password=pw,
-                                     db='notekeeper',
-                                     charset='utf8mb4',
-                                     cursorclass=pymysql.cursors.DictCursor)
+        
 
         cur = connection.cursor()
 
@@ -60,7 +60,6 @@ def register():
             connection.commit()
             flash('You are now registered and can log in', 'success')
             cur.close()
-            connection.close()
             return redirect(url_for('login'))
             
 
@@ -73,14 +72,6 @@ def login():
         username = request.form['username']
         pwdCandidate = request.form['password']
 
-        un = os.environ['DB_USER']
-        pw = os.environ['DB_PASS']
-        connection = pymysql.connect(host='localhost', 
-                                     user=un,
-                                     password=pw,
-                                     db='notekeeper',
-                                     charset='utf8mb4',
-                                     cursorclass=pymysql.cursors.DictCursor)
 
         cur = connection.cursor()
         check = cur.execute("SELECT * FROM users WHERE username = (%s)",(username))
@@ -103,7 +94,7 @@ def login():
                 return render_template('login.html', error=error)
 
             cur.close()
-            connection.close()
+            
 
         else:
             error = 'Username not found'
@@ -134,14 +125,6 @@ def logout():
 @app.route('/dashboard')
 @is_logged_in
 def dashboard():
-    un = os.environ['DB_USER']
-    pw = os.environ['DB_PASS']
-    connection = pymysql.connect(host='localhost', 
-                                 user=un,
-                                 password=pw,
-                                 db='notekeeper',
-                                 charset='utf8mb4',
-                                 cursorclass=pymysql.cursors.DictCursor) 
     cur = connection.cursor()
 
     results = cur.execute("SELECT * FROM tasks WHERE creator = %s", session['username'])
@@ -153,7 +136,6 @@ def dashboard():
         msg = 'No tasks. Good job!'
         return render_template('dashboard.html', msg = msg)
     cur.close()
-    connection.close()
 
     
 
@@ -170,36 +152,20 @@ def add_task():
         uTask = form.task.data
         details = form.details.data
         #creator = 
-        un = os.environ['DB_USER']
-        pw = os.environ['DB_PASS']
-        connection = pymysql.connect(host='localhost', 
-                                     user=un,
-                                     password=pw,
-                                     db='notekeeper',
-                                     charset='utf8mb4',
-                                     cursorclass=pymysql.cursors.DictCursor)
+
 
         cur = connection.cursor()
         cur.execute("INSERT INTO tasks (title, info, creator) VALUES(%s, %s, %s)", (uTask, details, session['username']))
         connection.commit()
         flash('Task added', 'success')
         cur.close()
-        connection.close()
         return redirect(url_for('dashboard'))
     return render_template('/add_task.html', form = form)
 
 @app.route('/edit_task/<string:id>', methods = ['GET', 'POST'])
 @is_logged_in
 def edit_task(id):
-    un = os.environ['DB_USER']
-    pw = os.environ['DB_PASS']
-    connection = pymysql.connect(host='localhost', 
-                                 user=un,
-                                 password=pw,
-                                 db='notekeeper',
-                                 charset='utf8mb4',
-                                 cursorclass=pymysql.cursors.DictCursor)
-
+    
     cur = connection.cursor()
     result = cur.execute("SELECT * FROM tasks WHERE id = %s", int(id))
     task = cur.fetchone()
@@ -219,29 +185,23 @@ def edit_task(id):
         connection.commit()
         flash('Task updated', 'success')
         cur.close()
-        connection.close()
+        
         return redirect(url_for('dashboard'))
     return render_template('/edit_task.html', form = form)
 
 @app.route('/delete_task/<string:id>', methods = ['POST'])
 @is_logged_in
 def delete_task(id):
-    un = os.environ['DB_USER']
-    pw = os.environ['DB_PASS']
-    connection = pymysql.connect(host='localhost', 
-                                 user=un,
-                                 password=pw,
-                                 db='notekeeper',
-                                 charset='utf8mb4',
-                                 cursorclass=pymysql.cursors.DictCursor)
+ 
 
     cur = connection.cursor()
     cur.execute("DELETE FROM tasks WHERE id = %s", int(id))
     connection.commit()
     flash('Task Deleted', 'success')
     cur.close()
-    connection.close()
+    
     return redirect(url_for('dashboard'))
+
 
 if __name__ == '__main__':
     app.secret_key = 'secret12345'
